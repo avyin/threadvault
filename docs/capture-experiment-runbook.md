@@ -114,6 +114,8 @@ Expected:
 
 ## Test Matrix
 
+For copy/paste prompt scripts, see `docs/gpt-action-test-prompts.md`.
+
 Run these as separate conversations with the Custom GPT:
 
 | Test | Conversation Shape | Goodbye Prompt | What To Check |
