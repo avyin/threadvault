@@ -15,6 +15,8 @@ This is an experiment, not a production service. The implementation favors obser
 
 For the current research conclusion on whether GPT Actions can store exact whole ChatGPT/GPT conversations, see [docs/conversation-capture-research.md](docs/conversation-capture-research.md).
 
+For the step-by-step experiment to measure which fields the GPT Action can actually send, see [docs/capture-experiment-runbook.md](docs/capture-experiment-runbook.md).
+
 ## Requirements
 
 - Python 3.10 or newer.
@@ -171,6 +173,12 @@ Open the terminal UI:
 
 ```bash
 python3 scripts/tui.py
+```
+
+Summarize which data fields were captured in saved conversations:
+
+```bash
+python3 scripts/analyze_capture.py
 ```
 
 Controls:

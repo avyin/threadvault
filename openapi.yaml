@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: ThreadVault Local Action API
-  version: 0.1.0
+  version: 0.2.0
   description: Minimal API for saving a custom GPT conversation transcript.
 servers:
   - url: http://localhost:8000
@@ -72,6 +72,50 @@ components:
         approximate_timestamp:
           type: string
       additionalProperties: true
+    CaptureReport:
+      type: object
+      description: Model-reported inventory of what conversation data was visible and included in this save attempt.
+      properties:
+        visible_message_count:
+          type: integer
+        included_message_count:
+          type: integer
+        visible_user_message_count:
+          type: integer
+        visible_assistant_message_count:
+          type: integer
+        included_roles:
+          type: array
+          items:
+            type: string
+        included_system_messages:
+          type: boolean
+        included_tool_messages:
+          type: boolean
+        included_timestamps:
+          type: boolean
+        included_files_or_images:
+          type: boolean
+        included_raw_transcript:
+          type: boolean
+        conversation_start_visible:
+          type: boolean
+        conversation_end_visible:
+          type: boolean
+        capture_confidence:
+          type: string
+          enum:
+            - high
+            - medium
+            - low
+            - unknown
+        known_omissions:
+          type: array
+          items:
+            type: string
+        inaccessible_content_notes:
+          type: string
+      additionalProperties: true
     ConversationSaveRequest:
       type: object
       required:
@@ -99,4 +143,6 @@ components:
           type: integer
         notes_about_completeness:
           type: string
+        capture_report:
+          $ref: "#/components/schemas/CaptureReport"
       additionalProperties: true

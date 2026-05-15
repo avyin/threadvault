@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parent
 DEFAULT_DB_PATH = ROOT / "data" / "threadvault.sqlite3"
 ALLOWED_ROLES = {"user", "assistant", "system", "tool", "unknown"}
 REQUIRED_SOURCE = "custom_gpt_action"
-APP_VERSION = "0.1.3"
+APP_VERSION = "0.2.0"
 
 
 def load_dotenv(path: Path) -> None:
@@ -164,6 +164,10 @@ def validate_payload(payload: Any) -> list[str]:
     notes = payload.get("notes_about_completeness")
     if notes is not None and not isinstance(notes, str):
         errors.append("notes_about_completeness must be a string when provided")
+
+    capture_report = payload.get("capture_report")
+    if capture_report is not None and not isinstance(capture_report, dict):
+        errors.append("capture_report must be an object when provided")
 
     messages = payload.get("messages")
     if not isinstance(messages, list):
@@ -323,7 +327,7 @@ def build_openapi_document(public_base_url: str) -> dict[str, Any]:
         "openapi": "3.1.0",
         "info": {
             "title": "ThreadVault Local Action API",
-            "version": "0.1.0",
+            "version": APP_VERSION,
             "description": "Minimal API for saving a custom GPT conversation transcript.",
         },
         "servers": [{"url": public_base_url}],
@@ -390,6 +394,40 @@ def build_openapi_document(public_base_url: str) -> dict[str, Any]:
                     },
                     "additionalProperties": True,
                 },
+                "CaptureReport": {
+                    "type": "object",
+                    "description": (
+                        "Model-reported inventory of what conversation data was visible "
+                        "and included in this save attempt."
+                    ),
+                    "properties": {
+                        "visible_message_count": {"type": "integer"},
+                        "included_message_count": {"type": "integer"},
+                        "visible_user_message_count": {"type": "integer"},
+                        "visible_assistant_message_count": {"type": "integer"},
+                        "included_roles": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                        "included_system_messages": {"type": "boolean"},
+                        "included_tool_messages": {"type": "boolean"},
+                        "included_timestamps": {"type": "boolean"},
+                        "included_files_or_images": {"type": "boolean"},
+                        "included_raw_transcript": {"type": "boolean"},
+                        "conversation_start_visible": {"type": "boolean"},
+                        "conversation_end_visible": {"type": "boolean"},
+                        "capture_confidence": {
+                            "type": "string",
+                            "enum": ["high", "medium", "low", "unknown"],
+                        },
+                        "known_omissions": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                        "inaccessible_content_notes": {"type": "string"},
+                    },
+                    "additionalProperties": True,
+                },
                 "ConversationSaveRequest": {
                     "type": "object",
                     "required": [
@@ -416,6 +454,7 @@ def build_openapi_document(public_base_url: str) -> dict[str, Any]:
                         },
                         "client_reported_message_count": {"type": "integer"},
                         "notes_about_completeness": {"type": "string"},
+                        "capture_report": {"$ref": "#/components/schemas/CaptureReport"},
                     },
                     "additionalProperties": True,
                 },
@@ -428,7 +467,7 @@ def build_openapi_yaml(public_base_url: str) -> str:
     return f"""openapi: 3.1.0
 info:
   title: ThreadVault Local Action API
-  version: 0.1.0
+  version: {APP_VERSION}
   description: Minimal API for saving a custom GPT conversation transcript.
 servers:
   - url: {public_base_url}
@@ -499,6 +538,50 @@ components:
         approximate_timestamp:
           type: string
       additionalProperties: true
+    CaptureReport:
+      type: object
+      description: Model-reported inventory of what conversation data was visible and included in this save attempt.
+      properties:
+        visible_message_count:
+          type: integer
+        included_message_count:
+          type: integer
+        visible_user_message_count:
+          type: integer
+        visible_assistant_message_count:
+          type: integer
+        included_roles:
+          type: array
+          items:
+            type: string
+        included_system_messages:
+          type: boolean
+        included_tool_messages:
+          type: boolean
+        included_timestamps:
+          type: boolean
+        included_files_or_images:
+          type: boolean
+        included_raw_transcript:
+          type: boolean
+        conversation_start_visible:
+          type: boolean
+        conversation_end_visible:
+          type: boolean
+        capture_confidence:
+          type: string
+          enum:
+            - high
+            - medium
+            - low
+            - unknown
+        known_omissions:
+          type: array
+          items:
+            type: string
+        inaccessible_content_notes:
+          type: string
+      additionalProperties: true
     ConversationSaveRequest:
       type: object
       required:
@@ -526,6 +609,8 @@ components:
           type: integer
         notes_about_completeness:
           type: string
+        capture_report:
+          $ref: "#/components/schemas/CaptureReport"
       additionalProperties: true
 """
 
