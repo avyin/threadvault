@@ -74,6 +74,7 @@ Requests without the key are rejected. The server does not log the API key.
 - `POST /api/conversations/save` saves a transcript payload.
 - `GET /api/conversations` lists saved conversation metadata.
 - `GET /api/conversations/:id` returns saved metadata and the full payload. `:id` can be the local numeric row id or a `conversation_id`.
+- `GET /api/ingest-events` lists recent save attempts, including validation and JSON parse failures.
 - `GET /health` returns a basic health response.
 - `GET /openapi.yaml` and `GET /openapi.yml` return a generated OpenAPI schema using `PUBLIC_BASE_URL` when set.
 - `GET /openapi.json` returns the same generated OpenAPI document as JSON.
@@ -102,6 +103,21 @@ Inspect one saved payload:
 curl -sS \
   -H "X-ThreadVault-Key: $THREADVAULT_API_KEY" \
   http://127.0.0.1:8000/api/conversations/1
+```
+
+Check recent ingest failures:
+
+```bash
+curl -sS \
+  -H "X-ThreadVault-Key: $THREADVAULT_API_KEY" \
+  http://127.0.0.1:8000/api/ingest-events
+```
+
+When testing through ngrok, use the ngrok host for the same checks:
+
+```bash
+curl -sS https://your-ngrok-host/health
+curl -sS -H "X-ThreadVault-Key: $THREADVAULT_API_KEY" https://your-ngrok-host/api/ingest-events
 ```
 
 ## Generate Larger Payloads

@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parent
 DEFAULT_DB_PATH = ROOT / "data" / "threadvault.sqlite3"
 ALLOWED_ROLES = {"user", "assistant", "system", "tool", "unknown"}
 REQUIRED_SOURCE = "custom_gpt_action"
+APP_VERSION = "0.1.3"
 
 
 def load_dotenv(path: Path) -> None:
@@ -108,6 +109,24 @@ def row_to_metadata(row: sqlite3.Row) -> dict[str, Any]:
         "total_transcript_chars": row["total_transcript_chars"],
         "approximate_token_estimate": row["approximate_token_estimate"],
         "request_body_size_bytes": row["request_body_size_bytes"],
+        "created_at": row["created_at"],
+    }
+
+
+def row_to_ingest_event(row: sqlite3.Row) -> dict[str, Any]:
+    try:
+        validation_errors = json.loads(row["validation_errors_json"])
+    except json.JSONDecodeError:
+        validation_errors = [row["validation_errors_json"]]
+
+    return {
+        "id": row["id"],
+        "conversation_row_id": row["conversation_row_id"],
+        "request_body_size_bytes": row["request_body_size_bytes"],
+        "message_count": row["message_count"],
+        "total_transcript_chars": row["total_transcript_chars"],
+        "json_parse_succeeded": bool(row["json_parse_succeeded"]),
+        "validation_errors": validation_errors,
         "created_at": row["created_at"],
     }
 
@@ -530,7 +549,15 @@ class ThreadVaultHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
 
         if parsed.path == "/health":
-            self.send_json(HTTPStatus.OK, {"ok": True})
+            self.send_json(
+                HTTPStatus.OK,
+                {
+                    "ok": True,
+                    "version": APP_VERSION,
+                    "source_validation": "optional",
+                    "public_base_url": self.public_base_url,
+                },
+            )
             return
 
         if parsed.path == "/openapi.json":
@@ -551,6 +578,10 @@ class ThreadVaultHandler(BaseHTTPRequestHandler):
 
         if parsed.path == "/api/conversations":
             self.list_conversations(parsed.query)
+            return
+
+        if parsed.path == "/api/ingest-events":
+            self.list_ingest_events(parsed.query)
             return
 
         prefix = "/api/conversations/"
@@ -672,6 +703,34 @@ class ThreadVaultHandler(BaseHTTPRequestHandler):
                 "ok": True,
                 "count": len(rows),
                 "conversations": [row_to_metadata(row) for row in rows],
+            },
+        )
+
+    def list_ingest_events(self, query: str) -> None:
+        params = parse_qs(query)
+        try:
+            limit = int(params.get("limit", ["20"])[0])
+        except ValueError:
+            limit = 20
+        limit = max(1, min(limit, 200))
+
+        with connect_db(self.db_path) as conn:
+            rows = conn.execute(
+                """
+                SELECT *
+                FROM ingest_events
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+
+        self.send_json(
+            HTTPStatus.OK,
+            {
+                "ok": True,
+                "count": len(rows),
+                "events": [row_to_ingest_event(row) for row in rows],
             },
         )
 
