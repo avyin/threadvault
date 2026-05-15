@@ -1,0 +1,29 @@
+{
+  "conversation_id": "demo-small-001",
+  "title": "Small ThreadVault smoke test",
+  "summary": "A short transcript used to verify local saving.",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Can you remember this conversation when I say goodbye?",
+      "index": 0,
+      "approximate_timestamp": "2026-05-15T00:00:00Z"
+    },
+    {
+      "role": "assistant",
+      "content": "I can send a transcript to ThreadVault if the action is configured.",
+      "index": 1,
+      "approximate_timestamp": "2026-05-15T00:00:05Z"
+    },
+    {
+      "role": "user",
+      "content": "Goodbye. Please save the transcript now.",
+      "index": 2,
+      "approximate_timestamp": "2026-05-15T00:01:00Z"
+    }
+  ],
+  "raw_transcript": "user: Can you remember this conversation when I say goodbye?\nassistant: I can send a transcript to ThreadVault if the action is configured.\nuser: Goodbye. Please save the transcript now.",
+  "source": "custom_gpt_action",
+  "client_reported_message_count": 3,
+  "notes_about_completeness": "Small local smoke test payload."
+}
