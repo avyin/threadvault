@@ -77,7 +77,6 @@ components:
       required:
         - title
         - messages
-        - source
         - client_reported_message_count
       properties:
         conversation_id:
@@ -94,7 +93,8 @@ components:
           type: string
         source:
           type: string
-          const: custom_gpt_action
+          default: custom_gpt_action
+          description: Optional source marker. The server defaults this to custom_gpt_action when omitted.
         client_reported_message_count:
           type: integer
         notes_about_completeness:

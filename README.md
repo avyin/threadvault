@@ -254,6 +254,8 @@ Ngrok exposes your local server to the internet. Keep `X-ThreadVault-Key` enable
 
 Allowed message roles are `user`, `assistant`, `system`, `tool`, and `unknown`.
 
+`source` is optional in practice. If the GPT Action omits it or sends a blank value, the server stores `custom_gpt_action`. If it sends another string, the server accepts and stores that string so source-format issues do not block transcript experiments.
+
 ## Known Limitations
 
 - Local MVP only. No OAuth, user accounts, rate limits, or production hardening.

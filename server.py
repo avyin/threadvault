@@ -135,8 +135,8 @@ def validate_payload(payload: Any) -> list[str]:
         errors.append("raw_transcript must be a string when provided")
 
     source = payload.get("source")
-    if source != REQUIRED_SOURCE:
-        errors.append(f'source must be "{REQUIRED_SOURCE}"')
+    if source is not None and not isinstance(source, str):
+        errors.append("source must be a string when provided")
 
     reported_count = payload.get("client_reported_message_count")
     if not isinstance(reported_count, int) or isinstance(reported_count, bool):
@@ -243,6 +243,9 @@ def save_conversation(
     message_count, message_chars, raw_chars, total_chars = transcript_metrics(payload)
     token_estimate = ((total_chars + 3) // 4) if total_chars else 0
     conversation_id = payload.get("conversation_id") or f"local-{uuid.uuid4()}"
+    source = payload.get("source")
+    if not isinstance(source, str) or not source.strip():
+        source = REQUIRED_SOURCE
     created_at = utc_now()
 
     with connect_db(db_path) as conn:
@@ -269,7 +272,7 @@ def save_conversation(
                 conversation_id,
                 payload["title"],
                 payload.get("summary"),
-                payload["source"],
+                source,
                 json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
                 message_count,
                 payload["client_reported_message_count"],
