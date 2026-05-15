@@ -13,6 +13,8 @@ This is an experiment, not a production service. The implementation favors obser
 - Approximate transcript character count and a rough token estimate.
 - JSON parse failures and validation failures.
 
+For the current research conclusion on whether GPT Actions can store exact whole ChatGPT/GPT conversations, see [docs/conversation-capture-research.md](docs/conversation-capture-research.md).
+
 ## Requirements
 
 - Python 3.10 or newer.
