@@ -103,3 +103,39 @@ Use `docs/capture-experiment-runbook.md` to run the remaining cases:
 - action/tool invocation before final save;
 - file/image conversation;
 - long conversation approaching the documented 100,000-character Action request limit.
+
+## Completion Audit
+
+Objective: follow the recommendation in `docs/conversation-capture-research.md` to identify which conversation data can be obtained through a GPT Action.
+
+Current status: partially complete.
+
+Completed evidence:
+
+- The Action can save user and assistant message text in `messages`.
+- The Action can save role labels.
+- The Action can save message order when it includes `index`.
+- The Action can save a GPT-generated summary.
+- The Action can save `notes_about_completeness`.
+- The Action can sometimes save `raw_transcript`.
+- The server records request size and transcript size for limit testing.
+- The analyzer reports which fields were present in each saved row.
+
+Missing or weak evidence:
+
+- User and assistant message text has not been manually compared against the visible ChatGPT UI, so exactness is not proven.
+- No rows include `capture_report` from a live GPT Action yet.
+- No rows include approximate timestamps.
+- No rows test whether tool/action messages are visible to the GPT.
+- No rows test file or image handling.
+- No rows test long conversations or behavior near the 100,000-character Action request limit.
+- No rows prove that hidden system/developer messages are obtainable; current evidence says they are not included.
+
+Required before this objective can be considered complete:
+
+1. Update the Custom GPT Action from `https://YOUR-NGROK-HOST/openapi.yaml` after starting server version `0.2.0`.
+2. Add the GPT instructions from `docs/capture-experiment-runbook.md`.
+3. Run test cases T1 through T8.
+4. Run `python3 scripts/analyze_capture.py --json`.
+5. Update the classification table above with row IDs from those tests.
+6. Manually compare saved payloads against the visible ChatGPT conversation for exactness.
