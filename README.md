@@ -165,6 +165,22 @@ The default database path is:
 data/threadvault.sqlite3
 ```
 
+Open the terminal UI:
+
+```bash
+python3 scripts/tui.py
+```
+
+Controls:
+
+- Arrow keys or `k` / `j` move selection.
+- `Enter` opens a saved conversation payload.
+- `c` shows conversations.
+- `e` shows ingest events and validation failures.
+- `r` refreshes from SQLite.
+- `b` goes back from detail view.
+- `q` quits.
+
 Inspect saved conversations:
 
 ```bash
