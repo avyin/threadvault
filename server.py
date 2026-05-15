@@ -376,7 +376,6 @@ def build_openapi_document(public_base_url: str) -> dict[str, Any]:
                     "required": [
                         "title",
                         "messages",
-                        "source",
                         "client_reported_message_count",
                     ],
                     "properties": {
@@ -388,7 +387,14 @@ def build_openapi_document(public_base_url: str) -> dict[str, Any]:
                             "items": {"$ref": "#/components/schemas/ConversationMessage"},
                         },
                         "raw_transcript": {"type": "string"},
-                        "source": {"type": "string", "const": REQUIRED_SOURCE},
+                        "source": {
+                            "type": "string",
+                            "default": REQUIRED_SOURCE,
+                            "description": (
+                                "Optional source marker. The server defaults this to "
+                                "custom_gpt_action when omitted."
+                            ),
+                        },
                         "client_reported_message_count": {"type": "integer"},
                         "notes_about_completeness": {"type": "string"},
                     },
@@ -397,6 +403,112 @@ def build_openapi_document(public_base_url: str) -> dict[str, Any]:
             },
         },
     }
+
+
+def build_openapi_yaml(public_base_url: str) -> str:
+    return f"""openapi: 3.1.0
+info:
+  title: ThreadVault Local Action API
+  version: 0.1.0
+  description: Minimal API for saving a custom GPT conversation transcript.
+servers:
+  - url: {public_base_url}
+paths:
+  /api/conversations/save:
+    post:
+      operationId: saveConversationTranscript
+      summary: Save a conversation transcript
+      security:
+        - ThreadVaultKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConversationSaveRequest"
+      responses:
+        "200":
+          description: Conversation saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  id:
+                    type: integer
+                  conversation_id:
+                    type: string
+                  message_count:
+                    type: integer
+                  total_transcript_chars:
+                    type: integer
+                  approximate_token_estimate:
+                    type: integer
+                  request_body_size_bytes:
+                    type: integer
+        "401":
+          description: Missing or invalid API key
+        "422":
+          description: Validation failed
+components:
+  securitySchemes:
+    ThreadVaultKey:
+      type: apiKey
+      in: header
+      name: X-ThreadVault-Key
+  schemas:
+    ConversationMessage:
+      type: object
+      required:
+        - role
+        - content
+      properties:
+        role:
+          type: string
+          enum:
+            - user
+            - assistant
+            - system
+            - tool
+            - unknown
+        content:
+          type: string
+        index:
+          type: integer
+        approximate_timestamp:
+          type: string
+      additionalProperties: true
+    ConversationSaveRequest:
+      type: object
+      required:
+        - title
+        - messages
+        - client_reported_message_count
+      properties:
+        conversation_id:
+          type: string
+        title:
+          type: string
+        summary:
+          type: string
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConversationMessage"
+        raw_transcript:
+          type: string
+        source:
+          type: string
+          default: custom_gpt_action
+          description: Optional source marker. The server defaults this to custom_gpt_action when omitted.
+        client_reported_message_count:
+          type: integer
+        notes_about_completeness:
+          type: string
+      additionalProperties: true
+"""
 
 
 class ThreadVaultHandler(BaseHTTPRequestHandler):
@@ -423,6 +535,14 @@ class ThreadVaultHandler(BaseHTTPRequestHandler):
 
         if parsed.path == "/openapi.json":
             self.send_json(HTTPStatus.OK, build_openapi_document(self.public_base_url))
+            return
+
+        if parsed.path in {"/openapi.yaml", "/openapi.yml"}:
+            self.send_text(
+                HTTPStatus.OK,
+                build_openapi_yaml(self.public_base_url),
+                "application/yaml; charset=utf-8",
+            )
             return
 
         if not self.authorized():
@@ -602,6 +722,14 @@ class ThreadVaultHandler(BaseHTTPRequestHandler):
         body = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def send_text(self, status: HTTPStatus, text: str, content_type: str) -> None:
+        body = text.encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)

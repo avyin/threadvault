@@ -75,7 +75,8 @@ Requests without the key are rejected. The server does not log the API key.
 - `GET /api/conversations` lists saved conversation metadata.
 - `GET /api/conversations/:id` returns saved metadata and the full payload. `:id` can be the local numeric row id or a `conversation_id`.
 - `GET /health` returns a basic health response.
-- `GET /openapi.json` returns a generated OpenAPI document using `PUBLIC_BASE_URL` when set.
+- `GET /openapi.yaml` and `GET /openapi.yml` return a generated OpenAPI schema using `PUBLIC_BASE_URL` when set.
+- `GET /openapi.json` returns the same generated OpenAPI document as JSON.
 
 ## Small Curl Test
 
@@ -172,7 +173,19 @@ sqlite3 data/threadvault.sqlite3 "select id, conversation_row_id, request_body_s
 
 ## OpenAPI And GPT Action Setup
 
-The paste-ready schema is in `openapi.yaml`. It exposes the save endpoint and the `X-ThreadVault-Key` API key security scheme.
+The paste-ready schema is in `openapi.yaml`. The running server also exposes a live schema URL:
+
+```text
+http://127.0.0.1:8000/openapi.yaml
+```
+
+When using ngrok, use:
+
+```text
+https://your-ngrok-host/openapi.yaml
+```
+
+The schema exposes the save endpoint and the `X-ThreadVault-Key` API key security scheme.
 
 For local-only testing, the server URL can stay:
 
@@ -185,8 +198,8 @@ For GPT Actions through ngrok, replace `servers[0].url` with the current public 
 
 In the GPT Actions editor:
 
-1. Paste `openapi.yaml`.
-2. Set the server URL to the ngrok HTTPS URL.
+1. Import the schema from `https://your-ngrok-host/openapi.yaml`, or paste `openapi.yaml`.
+2. Confirm the server URL is the ngrok HTTPS URL.
 3. Configure authentication as an API key.
 4. Use header name `X-ThreadVault-Key`.
 5. Use the same value as `THREADVAULT_API_KEY`.
@@ -211,7 +224,7 @@ Ngrok prints a public HTTPS forwarding URL, for example:
 https://example.ngrok-free.app
 ```
 
-Set that URL in `.env` if you want `/openapi.json` to include it:
+Set that URL in `.env` if you want `/openapi.yaml`, `/openapi.yml`, and `/openapi.json` to include it:
 
 ```bash
 PUBLIC_BASE_URL=https://example.ngrok-free.app
